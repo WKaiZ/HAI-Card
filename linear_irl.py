@@ -5,8 +5,6 @@ Matthew Alger, 2015
 matthew.alger@anu.edu.au
 """
 
-import random
-
 import numpy as np
 from cvxopt import matrix, solvers
 
@@ -33,6 +31,7 @@ def irl(n_states, n_actions, transition_probability, policy, discount, Rmax,
     # for legacy reasons; here, we reorder axes to fix this. We expect the
     # new probabilities to be of the shape (A, N, N).
     transition_probability = np.transpose(transition_probability, (1, 0, 2))
+    print('Done transposing transition_probability')
 
     def T(a, s):
         """
@@ -50,18 +49,22 @@ def irl(n_states, n_actions, transition_probability, policy, discount, Rmax,
     # Minimise c . x.
     c = -np.hstack([np.zeros(n_states), np.ones(n_states),
                     -l1*np.ones(n_states)])
+    print('Done c')
     zero_stack1 = np.zeros((n_states*(n_actions-1), n_states))
+    print('Done zero_stack1')
     T_stack = np.vstack([
         -T(a, s)
         for s in range(n_states)
         for a in A - {policy[s]}
     ])
+    print('Done T_stack')
     I_stack1 = np.vstack([
         np.eye(1, n_states, s)
         for s in range(n_states)
         for a in A - {policy[s]}
     ])
     I_stack2 = np.eye(n_states)
+    print('Done I_stack1 and 2')
     zero_stack2 = np.zeros((n_states, n_states))
 
     D_left = np.vstack([T_stack, T_stack, -I_stack2, I_stack2])
@@ -175,6 +178,8 @@ def large_irl(value, transition_probability, feature_matrix, n_states,
                              for j in range(n_actions-1)])])
     assert A.shape[1] == x_size
 
+    print('Done A')
+
     # b is just zeros!
     b = np.zeros(A.shape[0])
 
@@ -191,6 +196,8 @@ def large_irl(value, transition_probability, feature_matrix, n_states,
                         np.zeros((n_actions-1, D))])
                     for l in range(n_states)])
     assert bottom_row.shape[1] == x_size
+
+    print('Done bottom row')
     G = np.vstack([
             np.hstack([
                 np.zeros((D, n_states)),
@@ -215,8 +222,12 @@ def large_irl(value, transition_probability, feature_matrix, n_states,
             bottom_row])
     assert G.shape[1] == x_size
 
+    print('Done G')
+
     h = np.vstack([np.ones((D*2, 1)),
                    np.zeros((n_states*(n_actions-1)*2+bottom_row.shape[0], 1))])
+    
+    print('Done h')
 
     from cvxopt import matrix, solvers
     c = matrix(c)
@@ -225,5 +236,6 @@ def large_irl(value, transition_probability, feature_matrix, n_states,
     A = matrix(A)
     b = matrix(b)
     results = solvers.lp(c, G, h, A, b)
+    print('Done solving')
     alpha = np.asarray(results["x"][-D:], dtype=np.double)
     return np.dot(feature_matrix, -alpha)
