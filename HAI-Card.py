@@ -68,13 +68,15 @@ def get_values(feature_matrix, policy, num_states, transition_probabilities, dis
         values.append(value(policy, num_states, transition_probabilities, reward, discount_factor, threshold))
     return np.array(values)
 
-def get_feature_matrix(states):
+def get_feature_matrix(states, initial_state):
     lst = []
-    for i in range(len(states)):
-        feature = np.zeros(len(states))
-        feature[i] = 1
-        lst.append(feature)
+    initial_state = "".join([str(i) for i in initial_state])
+    for state in states:
+        state = state.split()
+        state = ''.join([str(i) for i in state])
+        lst.append([(len(initial_state) - len(state)) / len(initial_state)])
     return np.array(lst)
+
 
 if __name__ == '__main__':
     states = get_states([131242, 412323, 142243, 443131], 4)
@@ -87,7 +89,7 @@ if __name__ == '__main__':
     print('Done getting transition probabilities')
     policy = get_policy(states, actions, [131242, 412323, 142243, 443131], '211100030111222303322033')
     print('Done getting policy')
-    feature_matrix = get_feature_matrix(states)
+    feature_matrix = get_feature_matrix(states, [131242, 412323, 142243, 443131])
     print('Done getting feature matrix')
     values = get_values(feature_matrix, policy, num_states, transition)
     print('Done getting values')
